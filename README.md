@@ -15,7 +15,7 @@ Given that ratios can be quite volatile, a minimal value for the denominator can
 
 ## Example
 
-![](README_files/athaliana_vs_dmelanogaster.pn)<!-- -->
+![](README_files/athaliana_vs_dmelanogaster.png)<!-- -->
 
 
 
