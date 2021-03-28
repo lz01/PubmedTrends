@@ -1,7 +1,7 @@
 Pubmed Relative Trends
 ================
 
-This shiny app gets the number of articles returned by two [Pubmed](https://pubmed.ncbi.nlm.nih.gov/) queries and draws a plot of their ratio throughout time.<br>
+This shiny app gets the number of articles returned by two [Pubmed](https://pubmed.ncbi.nlm.nih.gov/) queries and draws either the counts or ratio throughout time.<br>
 
 Pubmed is a search engine supporting the search in the MEDLINE database of references and abstracts in the life sciences and biomedical fields.<br>
 
@@ -15,7 +15,10 @@ Given that ratios can be quite volatile, a minimal value for the denominator can
 
 ## Example
 
-![](README_files/athaliana_vs_dmelanogaster.png)<!-- -->
+### Number of articles
 
+![](README_files/athaliana_vs_dmelanogaster_counts.png)<!-- -->
 
+### Ratio of number of articles
 
+![](README_files/athaliana_vs_dmelanogaster_ratio.png)<!-- -->
