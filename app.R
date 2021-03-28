@@ -92,14 +92,7 @@ server = function(input, output)
     })
     
     output$input_plot_title = renderText({
-      if(input$plot_ratio)
-      {
-        "Ratio of the number of articles returned by both queries"
-      }
-      else
-      {
-        "Number of articles returned by both queries"
-      }
+      
       
     })
     
@@ -157,14 +150,17 @@ server = function(input, output)
                                   geom_line() +
                                   xlab("Year") +
                                   ylab("Count") +
-                                  theme(legend.title = element_blank())
+                                  theme(legend.title = element_blank()) 
                              }
                              
                              print(gg)
                            })
-	output$scatterPlot <- renderPlot({
+	output$scatterPlot = renderPlot({
 	drawplot()
     })
+	output$input_plot_title = renderText({
+	  ifelse(input$plot_ratio, "Ratio of the number of articles returned by both queries","Number of articles returned by both queries")
+	})
 	
 }
 
