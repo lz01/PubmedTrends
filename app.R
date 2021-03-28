@@ -3,6 +3,7 @@
 ## Loading libraries
 library(RISmed)
 library(dplyr)
+library(tidyr)
 library(ggplot2)
 library(stringr)
 library(shinycssloaders)
@@ -36,33 +37,34 @@ user_interface = fluidPage(
 		# For help with the syntax, look here https://pubmed.ncbi.nlm.nih.gov/help/
 		# Text input for query 1
 		textInput(inputId = "query1",
-                label = "First Pubmed query (numerator):",
+                label = "First Pubmed query",
                 value = "Arabidopsis thaliana"),
 		# Text input for query 2
 		textInput(inputId = "query2",
-                label = HTML("Second Pubmed query (denominator):"),
+                label = HTML("Second Pubmed query"),
                 value = "Drosophila melanogaster"),
+    # Plot ratio or both counts
+		checkboxInput(inputId = "plot_ratio",
+		              label = "Plot ratio (query 1 / query 2)",
+		              value = FALSE),
     # Select input for start year
     selectInput(inputId = "start_year", 
-        		label = "From:", 
+        		label = "From", 
         		choices = seq(1850,as.numeric(format(Sys.Date(), "%Y"))), 
         		selected = "1970"),
     # Select input for end year
     selectInput(inputId = "end_year", 
-        		label = "To:", 
+        		label = "To", 
         		choices = seq(1850,as.numeric(format(Sys.Date(), "%Y"))), 
         		selected = format(Sys.Date(), "%Y")),
     # Numeric input for approx number of bins to group years
     numericInput(inputId = "nb_bins", 
-        		label = "Approximate number of bins:", 
+        		label = "Approximate number of bins", 
         		min = 3, 
         		max = 50,
         		value = 5),
-		# numeric input for minimum count in query 2 to display the ratio
-		numericInput(inputId = "min_count",
-		             label = "Minimum number of articles from query 2 for display",
-		             value = 10,
-		             min = 10),
+		# numeric input for minimum count in query 2 to display the ratio, only display if we are plotting the ratio
+		uiOutput("input_min_count"),
 		actionButton(inputId = "plot",
 		             label = "Draw Plot"),
 	),
@@ -70,7 +72,7 @@ user_interface = fluidPage(
   # Main panel for displaying outputs
  	mainPanel(
  	# Output: Scatter plot
- 	    h4("Ratio of the number of articles returned by the two queries"),
+ 	    h4(uiOutput("input_plot_title")),
       plotOutput(outputId = "scatterPlot") %>% withSpinner(color="#323637")
 			)
 	)
@@ -78,6 +80,30 @@ user_interface = fluidPage(
 
 server = function(input, output)
 {
+  
+    output$input_min_count = renderUI({
+      if(input$plot_ratio)
+      {
+        numericInput(inputId = "min_count",
+                     label = "Minimum number of articles from query 2 for display",
+                     value = 10,
+                     min = 10) 
+      }
+    })
+    
+    output$input_plot_title = renderText({
+      if(input$plot_ratio)
+      {
+        "Ratio of the number of articles returned by both queries"
+      }
+      else
+      {
+        "Number of articles returned by both queries"
+      }
+      
+    })
+    
+  
   drawplot = eventReactive(input$plot,
                            {
                              ## Getting input queries and dates
@@ -102,17 +128,38 @@ server = function(input, output)
                              count1 = count1[-1]
                              count2 = count2[-1]
                              
-                             counts = bounds %>% mutate(xmid = (xstart + xend)/2,
+                             if(input$plot_ratio)
+                             {
+                                counts = bounds %>% mutate(xmid = (xstart + xend)/2,
                                                         count1 = count1,
                                                         count2 = count2,
                                                         ratio = ifelse(count2 >= min_count, count1/count2, NA))
                              
                                
-                             gg = ggplot(counts, aes(xmid,ratio)) + 
-                               geom_point() +
-                               geom_line() +
-                               xlab("Year") +
-                               ylab("Ratio")
+                                gg = ggplot(counts, aes(xmid,ratio)) + 
+                                  geom_point() +
+                                  geom_line() +
+                                  xlab("Year") +
+                                  ylab("Ratio")
+                             }
+                             else
+                             {
+                                counts = bounds %>% mutate(xmid = (xstart + xend)/2,
+                                                        count1 = count1,
+                                                        count2 = count2) %>%
+                                                    pivot_longer(cols = c(count1,count2), names_to = "which_count", values_to = "count") %>%
+                                                    mutate(which_count = recode(which_count,`count1` = "query 1", `count2` = "query 2"))
+
+                             
+                               
+                                gg = ggplot(counts, aes(xmid,count,col = which_count)) + 
+                                  geom_point() +
+                                  geom_line() +
+                                  xlab("Year") +
+                                  ylab("Count") +
+                                  theme(legend.title = element_blank())
+                             }
+                             
                              print(gg)
                            })
 	output$scatterPlot <- renderPlot({
